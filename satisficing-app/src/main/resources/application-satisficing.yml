@@ -1,0 +1,13 @@
+spring:
+
+  # throw a exception when 404
+  mvc.throw-exception-if-no-handler-found: true
+  web.resources.add-mappings: false
+
+logging:
+  config: classpath:logback-spring.xml
+
+mybatis:
+  mapper-locations: classpath*:mapper/*.xml
+  configuration:
+    default-enum-type-handler: com.spldeolin.satisficing.app.mybatis.EnumTypeHandlerEx

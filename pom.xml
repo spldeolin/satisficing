@@ -15,10 +15,10 @@
     <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <modules>
-        <module>satisficing-client</module>
-        <module>satisficing-service</module>
-        <module>satisficing-security-client</module>
-        <module>satisficing-security-service</module>
+        <module>satisficing-api</module>
+        <module>satisficing-app</module>
+        <module>satisficing-identity-ac</module>
+        <module>satisficing-identity-app</module>
         <module>satisficing-based-archetype</module>
     </modules>
 
@@ -94,22 +94,22 @@
             <!-- modules version management -->
             <dependency>
                 <groupId>com.spldeolin.satisficing</groupId>
-                <artifactId>satisficing-client</artifactId>
+                <artifactId>satisficing-api</artifactId>
                 <version>${satisficing.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.spldeolin.satisficing</groupId>
-                <artifactId>satisficing-service</artifactId>
+                <artifactId>satisficing-app</artifactId>
                 <version>${satisficing.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.spldeolin.satisficing</groupId>
-                <artifactId>satisficing-security-client</artifactId>
+                <artifactId>satisficing-identity-ac</artifactId>
                 <version>${satisficing.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.spldeolin.satisficing</groupId>
-                <artifactId>satisficing-security-service</artifactId>
+                <artifactId>satisficing-identity-app</artifactId>
                 <version>${satisficing.version}</version>
             </dependency>
         </dependencies>
