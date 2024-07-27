@@ -2,8 +2,8 @@ package com.spldeolin.satisficing.identity.app.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import org.jasypt.util.password.StrongPasswordEncryptor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.spldeolin.satisficing.app.exception.BizException;
@@ -23,6 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
 public class CreateUserServiceImpl implements CreateUserService {
+
+    public static final StrongPasswordEncryptor passwordEncryptor = new StrongPasswordEncryptor();
 
     private static final String defaultPassword = "123456";
 
@@ -50,7 +52,7 @@ public class CreateUserServiceImpl implements CreateUserService {
         user.setUserUuid(UUID.randomUUID().toString());
         user.setUsername(req.getUsername());
         user.setMobile(req.getMobile());
-        user.setPassword(new BCryptPasswordEncoder().encode(defaultPassword));
+        user.setPassword(passwordEncryptor.encryptPassword(defaultPassword));
         user.setNickName(req.getNickName());
         user.setCreateUserUuid(LoginSession.getCurrent().getLoginUserUuid());
         user.setCreateTime(LocalDateTime.now());

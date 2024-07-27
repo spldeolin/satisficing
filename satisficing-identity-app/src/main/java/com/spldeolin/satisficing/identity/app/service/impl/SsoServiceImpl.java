@@ -2,11 +2,11 @@ package com.spldeolin.satisficing.identity.app.service.impl;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import org.jasypt.util.password.StrongPasswordEncryptor;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.spldeolin.satisficing.app.exception.BizException;
 import com.spldeolin.satisficing.identity.ac.exception.UnauthcRequestException;
@@ -33,6 +33,8 @@ public class SsoServiceImpl implements SsoService {
     private static final String codeForTokenKeyPrefix = "codeForToken:";
 
     private static final String loginSessionKeyPrefix = "loginSession:";
+
+    public static final StrongPasswordEncryptor passwordEncryptor = new StrongPasswordEncryptor();
 
     @Autowired
     private UserMapper userMapper;
@@ -115,7 +117,7 @@ public class SsoServiceImpl implements SsoService {
 
     private boolean matchPassword(String password, UserEntity user) {
         password = rsa.decrypt(password);
-        return new BCryptPasswordEncoder().matches(password, user.getPassword());
+        return passwordEncryptor.checkPassword(password, user.getPassword());
     }
 
     private LoginSession parseToken(String token) {
