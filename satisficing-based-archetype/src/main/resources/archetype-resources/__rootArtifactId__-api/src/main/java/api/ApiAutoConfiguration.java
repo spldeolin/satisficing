@@ -9,11 +9,11 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * @author Deolin 2024-06-07
  */
-@Configuration
+@Configuration("${artifactId}AutoConfiguration")
 @ComponentScan("${package}.api")
 @EnableFeignClients("${package}.api")
 @Slf4j
-public class ${upperCamelRootArtifactId}ApiAutoConfiguration {
+public class ApiAutoConfiguration {
 
     @PostConstruct
     public void postConstruct() {
