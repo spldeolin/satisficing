@@ -25,31 +25,31 @@ public class ReasonableUtils {
     }
 
     /**
-     * 对参数javabean进行合理化
+     * 对参数DTO进行合理化
      */
-    public static void reasonable(Object javabean) {
-        if (javabean == null) {
+    public static void reasonable(Object dto) {
+        if (dto == null) {
             return;
         }
-        makeStringReasonable(javabean);
-        makeContainerReasonable(javabean);
+        makeStringReasonable(dto);
+        makeContainerReasonable(dto);
     }
 
     /**
      * 字符串合理化处理——确保每个String只有null和有字符2种情况，简化safe判断
      * <p>
-     * 对参数javabean及其各Nest层次的String对象，进行trim处理和emptyToNull处理
+     * 对参数dto及其各Nest层次的String对象，进行trim处理和emptyToNull处理
      */
-    private static void makeStringReasonable(Object javabean) {
-        if (javabean == null) {
+    private static void makeStringReasonable(Object dto) {
+        if (dto == null) {
             return;
         }
-        Class<?> clazz = javabean.getClass();
+        Class<?> clazz = dto.getClass();
         Field[] fields = clazz.getDeclaredFields();
         for (Field field : fields) {
             field.setAccessible(true);
             try {
-                Object fieldValue = field.get(javabean);
+                Object fieldValue = field.get(dto);
                 if (fieldValue != null) {
                     Class<?> fieldType = field.getType();
                     if (fieldType.equals(String.class)) {
@@ -57,7 +57,7 @@ public class ReasonableUtils {
                         if (trimmedValue.length() == 0) {
                             trimmedValue = null;
                         }
-                        field.set(javabean, trimmedValue);
+                        field.set(dto, trimmedValue);
                     } else if (Collection.class.isAssignableFrom(fieldType)) {
                         Collection<?> collection = (Collection<?>) fieldValue;
                         Iterator<?> itr = collection.iterator();
@@ -84,30 +84,30 @@ public class ReasonableUtils {
     /**
      * 容器合理化处理——确保每个列表可以安全的forEach
      * <p>
-     * 对参数javabean及其各Nest层次的Like-A Collection、Like-A Map和Array对象，进行删除为null的element处理和nullToEmpty处理
+     * 对参数dto及其各Nest层次的Like-A Collection、Like-A Map和Array对象，进行删除为null的element处理和nullToEmpty处理
      */
-    private static void makeContainerReasonable(Object javabean) {
-        if (javabean == null) {
+    private static void makeContainerReasonable(Object dto) {
+        if (dto == null) {
             return;
         }
 
-        Field[] fields = javabean.getClass().getDeclaredFields();
+        Field[] fields = dto.getClass().getDeclaredFields();
 
         for (Field field : fields) {
             field.setAccessible(true);
 
             try {
-                Object value = field.get(javabean);
+                Object value = field.get(dto);
 
                 if (value == null) {
                     Class<?> fieldType = field.getType();
 
                     if (Collection.class.isAssignableFrom(fieldType)) {
-                        field.set(javabean, createEmptyCollection(fieldType));
+                        field.set(dto, createEmptyCollection(fieldType));
                     } else if (Map.class.isAssignableFrom(fieldType)) {
-                        field.set(javabean, createEmptyMap(fieldType));
+                        field.set(dto, createEmptyMap(fieldType));
                     } else if (fieldType.isArray()) {
-                        field.set(javabean, createEmptyArray(fieldType));
+                        field.set(dto, createEmptyArray(fieldType));
                     }
                 } else if (isNotSimpleValueType(value.getClass())) {
                     makeContainerReasonable(value);

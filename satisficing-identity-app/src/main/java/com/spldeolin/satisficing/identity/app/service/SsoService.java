@@ -1,11 +1,11 @@
 package com.spldeolin.satisficing.identity.app.service;
 
-import com.spldeolin.satisficing.identity.ac.javabean.req.IsLoginReqDto;
-import com.spldeolin.satisficing.identity.ac.javabean.resp.IsLoginRespDto;
-import com.spldeolin.satisficing.identity.app.javabean.req.LoginByCodeReqDto;
-import com.spldeolin.satisficing.identity.app.javabean.req.LoginReqDto;
-import com.spldeolin.satisficing.identity.app.javabean.resp.LoginByCodeRespDto;
-import com.spldeolin.satisficing.identity.app.javabean.resp.LoginRespDto;
+import com.spldeolin.satisficing.identity.ac.dto.req.IsLoginReqDto;
+import com.spldeolin.satisficing.identity.ac.dto.resp.IsLoginRespDto;
+import com.spldeolin.satisficing.identity.app.dto.req.LoginByCodeReqDto;
+import com.spldeolin.satisficing.identity.app.dto.req.LoginReqDto;
+import com.spldeolin.satisficing.identity.app.dto.resp.LoginByCodeRespDto;
+import com.spldeolin.satisficing.identity.app.dto.resp.LoginRespDto;
 
 /**
  * @author Deolin 2024-05-31

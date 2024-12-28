@@ -4,9 +4,9 @@ import java.util.List;
 import java.util.Map;
 import org.apache.ibatis.annotations.MapKey;
 import org.apache.ibatis.annotations.Param;
+import com.spldeolin.satisficing.identity.app.dto.cond.QueryUserCond;
+import com.spldeolin.satisficing.identity.app.dto.record.QueryUserExRecord;
 import com.spldeolin.satisficing.identity.app.entity.UserEntity;
-import com.spldeolin.satisficing.identity.app.javabean.cond.QueryUserCond;
-import com.spldeolin.satisficing.identity.app.javabean.record.QueryUserExRecord;
 
 /**
  * 用户

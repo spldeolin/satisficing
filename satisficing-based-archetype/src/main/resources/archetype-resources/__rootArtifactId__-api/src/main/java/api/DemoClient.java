@@ -7,8 +7,8 @@ import javax.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import ${package}.api.javabean.req.DemoReqDto;
-import ${package}.api.javabean.resp.DemoRespDto;
+import ${package}.api.dto.req.DemoReqDto;
+import ${package}.api.dto.resp.DemoRespDto;
 import com.spldeolin.satisficing.api.RequestResult;
 
 /**

@@ -6,8 +6,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import com.spldeolin.satisficing.api.RequestResult;
 import com.spldeolin.satisficing.identity.ac.client.SsoClient;
-import com.spldeolin.satisficing.identity.ac.javabean.req.IsLoginReqDto;
-import com.spldeolin.satisficing.identity.ac.javabean.resp.IsLoginRespDto;
+import com.spldeolin.satisficing.identity.ac.dto.req.IsLoginReqDto;
+import com.spldeolin.satisficing.identity.ac.dto.resp.IsLoginRespDto;
 import com.spldeolin.satisficing.identity.app.service.SsoService;
 
 /**

@@ -18,11 +18,11 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 import org.springframework.web.util.ServletRequestPathUtils;
 import com.spldeolin.satisficing.api.RequestResult;
 import com.spldeolin.satisficing.identity.ac.client.SsoClient;
+import com.spldeolin.satisficing.identity.ac.dto.LoginSession;
+import com.spldeolin.satisficing.identity.ac.dto.req.IsLoginReqDto;
+import com.spldeolin.satisficing.identity.ac.dto.resp.IsLoginRespDto;
 import com.spldeolin.satisficing.identity.ac.enums.AuthcRule;
 import com.spldeolin.satisficing.identity.ac.exception.UnauthcRequestException;
-import com.spldeolin.satisficing.identity.ac.javabean.LoginSession;
-import com.spldeolin.satisficing.identity.ac.javabean.req.IsLoginReqDto;
-import com.spldeolin.satisficing.identity.ac.javabean.resp.IsLoginRespDto;
 import com.spldeolin.satisficing.identity.ac.task.AuthcRulesCollector;
 import lombok.extern.slf4j.Slf4j;
 

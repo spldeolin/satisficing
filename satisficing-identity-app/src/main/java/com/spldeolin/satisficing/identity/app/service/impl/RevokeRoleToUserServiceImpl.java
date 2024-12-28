@@ -1,7 +1,7 @@
 package com.spldeolin.satisficing.identity.app.service.impl;
 
 import org.springframework.stereotype.Service;
-import com.spldeolin.satisficing.identity.app.javabean.req.RevokeRoleToUserReqDto;
+import com.spldeolin.satisficing.identity.app.dto.req.RevokeRoleToUserReqDto;
 import com.spldeolin.satisficing.identity.app.service.RevokeRoleToUserService;
 import lombok.extern.slf4j.Slf4j;
 

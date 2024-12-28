@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import com.github.pagehelper.PageInfo;
 import com.spldeolin.satisficing.api.RequestResult;
-import com.spldeolin.satisficing.identity.app.javabean.req.ListDepartmentsReqDto;
-import com.spldeolin.satisficing.identity.app.javabean.resp.ListDepartmentsRespDto;
+import com.spldeolin.satisficing.identity.app.dto.req.ListDepartmentsReqDto;
+import com.spldeolin.satisficing.identity.app.dto.resp.ListDepartmentsRespDto;
 import com.spldeolin.satisficing.identity.app.service.ListDepartmentsService;
 
 /**

@@ -3,7 +3,7 @@ package com.spldeolin.satisficing.identity.ac.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
-import com.spldeolin.satisficing.identity.ac.javabean.LoginSession;
+import com.spldeolin.satisficing.identity.ac.dto.LoginSession;
 import feign.RequestInterceptor;
 
 /**

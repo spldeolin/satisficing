@@ -297,8 +297,8 @@
         <!-- @formatter:on -->
     </select>
     <!-- Allison 1875 Lot No: QT1001S-1B2F0DC4 -->
-    <select id='queryUserEx' parameterType='com.spldeolin.satisficing.identity.app.javabean.cond.QueryUserCond'
-        resultType='com.spldeolin.satisficing.identity.app.javabean.record.QueryUserExRecord'>
+    <select id='queryUserEx' parameterType='com.spldeolin.satisficing.identity.app.dto.cond.QueryUserCond'
+        resultType='com.spldeolin.satisficing.identity.app.dto.record.QueryUserExRecord'>
         <!-- @formatter:off -->
         SELECT t1.`id` AS userId,
             t1.`user_uuid` AS userUuid,
