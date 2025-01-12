@@ -24,7 +24,7 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalTimeSerializer;
-import com.spldeolin.satisficing.app.util.exception.JsonException;
+import com.spldeolin.satisficing.api.SysException;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -74,7 +74,7 @@ public class JsonUtils {
             return om.writeValueAsString(object);
         } catch (JsonProcessingException e) {
             log.error("object={}", object, e);
-            throw new JsonException(e);
+            throw new SysException(e);
         }
     }
 
@@ -87,7 +87,7 @@ public class JsonUtils {
             return om.writerWithDefaultPrettyPrinter().writeValueAsString(object);
         } catch (JsonProcessingException e) {
             log.error("object={}", object, e);
-            throw new JsonException(e);
+            throw new SysException(e);
         }
     }
 
@@ -104,57 +104,57 @@ public class JsonUtils {
         }
     }
 
-    public static <T> T toObject(String json, Class<T> clazz) throws JsonException {
+    public static <T> T toObject(String json, Class<T> clazz) throws SysException {
         return toObject(json, clazz, om);
     }
 
-    public static <T> T toObject(String json, Class<T> clazz, ObjectMapper om) throws JsonException {
+    public static <T> T toObject(String json, Class<T> clazz, ObjectMapper om) throws SysException {
         try {
             return om.readValue(json, clazz);
         } catch (IOException e) {
             log.error("json={}, clazz={}", json, clazz, e);
-            throw new JsonException(e);
+            throw new SysException(e);
         }
     }
 
-    public static <T> List<T> toListOfObject(String json, Class<T> clazz) throws JsonException {
+    public static <T> List<T> toListOfObject(String json, Class<T> clazz) throws SysException {
         return toListOfObject(json, clazz, om);
     }
 
-    public static <T> List<T> toListOfObject(String json, Class<T> clazz, ObjectMapper om) throws JsonException {
+    public static <T> List<T> toListOfObject(String json, Class<T> clazz, ObjectMapper om) throws SysException {
         try {
             CollectionType collectionType = om.getTypeFactory().constructCollectionType(List.class, clazz);
             return om.readValue(json, collectionType);
         } catch (IOException e) {
             log.error("json={}, clazz={}", json, clazz, e);
-            throw new JsonException(e);
+            throw new SysException(e);
         }
     }
 
-    public static <T> T toParameterizedObject(String json, TypeReference<T> typeReference) throws JsonException {
+    public static <T> T toParameterizedObject(String json, TypeReference<T> typeReference) throws SysException {
         return toParameterizedObject(json, typeReference, om);
     }
 
     public static <T> T toParameterizedObject(String json, TypeReference<T> typeReference, ObjectMapper om)
-            throws JsonException {
+            throws SysException {
         try {
             return om.readValue(json, typeReference);
         } catch (JsonProcessingException e) {
             log.error("json={}, typeReference={}", json, typeReference, e);
-            throw new JsonException(e);
+            throw new SysException(e);
         }
     }
 
-    public static JsonNode toTree(String json) throws JsonException {
+    public static JsonNode toTree(String json) throws SysException {
         return toTree(json, om);
     }
 
-    public static JsonNode toTree(String json, ObjectMapper om) throws JsonException {
+    public static JsonNode toTree(String json, ObjectMapper om) throws SysException {
         try {
             return om.readTree(json);
         } catch (JsonProcessingException e) {
             log.error("json={}", json, e);
-            throw new JsonException(e);
+            throw new SysException(e);
         }
     }
 

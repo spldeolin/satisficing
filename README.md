@@ -19,11 +19,12 @@ mvn install -f satisficing/pom.xml
 # generate the project based on Satisficing
 mvn archetype:generate \
     -DarchetypeGroupId=com.spldeolin.satisficing \
-    -DarchetypeArtifactId=satisficing-based-archetype \
+    -DarchetypeArtifactId=satisficing-archetype \
     -DarchetypeVersion=0.0.1-SNAPSHOT \
     -DgroupId=com.your.group \
     -DartifactId=your-project  \
     -Dversion=0.0.1-SNAPSHOT \
+    -DwithAllison1875=true \
     -DarchetypeCatalog=local \
     -DinteractiveMode=false
 ```

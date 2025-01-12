@@ -7,48 +7,48 @@ import java.sql.SQLException;
 import java.util.Objects;
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
-import com.spldeolin.satisficing.api.EnumAncestor;
+import com.spldeolin.satisficing.api.BaseEnum;
 
 /**
  * EnumAncestor派生类的TypeHandler
  *
  * @author Deolin 2020-11-10
  */
-public class EnumAncestorTypeHandler extends BaseTypeHandler<EnumAncestor<String>> {
+public class EnumAncestorTypeHandler extends BaseTypeHandler<BaseEnum<String>> {
 
-    private final Class<EnumAncestor<String>> enumType;
+    private final Class<BaseEnum<String>> enumType;
 
-    public EnumAncestorTypeHandler(Class<EnumAncestor<String>> enumType) {
+    public EnumAncestorTypeHandler(Class<BaseEnum<String>> enumType) {
         Objects.requireNonNull(enumType, "Type argument cannot be null");
         this.enumType = enumType;
     }
 
     @Override
-    public void setNonNullParameter(PreparedStatement ps, int i, EnumAncestor<String> parameter, JdbcType jdbcType)
+    public void setNonNullParameter(PreparedStatement ps, int i, BaseEnum<String> parameter, JdbcType jdbcType)
             throws SQLException {
         ps.setString(i, parameter.getCode());
     }
 
     @Override
-    public EnumAncestor<String> getNullableResult(ResultSet rs, String columnName) throws SQLException {
+    public BaseEnum<String> getNullableResult(ResultSet rs, String columnName) throws SQLException {
         String code = rs.getString(columnName);
         return rs.wasNull() ? null : of(code);
     }
 
     @Override
-    public EnumAncestor<String> getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
+    public BaseEnum<String> getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
         String code = rs.getString(columnIndex);
         return rs.wasNull() ? null : of(code);
     }
 
     @Override
-    public EnumAncestor<String> getNullableResult(CallableStatement cs, int columnIndex) throws SQLException {
+    public BaseEnum<String> getNullableResult(CallableStatement cs, int columnIndex) throws SQLException {
         String code = cs.getString(columnIndex);
         return cs.wasNull() ? null : of(code);
     }
 
-    private EnumAncestor<String> of(String code) {
-        for (EnumAncestor<String> enumConstant : enumType.getEnumConstants()) {
+    private BaseEnum<String> of(String code) {
+        for (BaseEnum<String> enumConstant : enumType.getEnumConstants()) {
             if (enumConstant.getCode().equals(code)) {
                 return enumConstant;
             }

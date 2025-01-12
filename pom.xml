@@ -12,9 +12,7 @@
     <modules>
         <module>satisficing-api</module>
         <module>satisficing-app</module>
-        <module>satisficing-identity-ac</module>
-        <module>satisficing-identity-app</module>
-        <module>satisficing-based-archetype</module>
+        <module>satisficing-archetype</module>
     </modules>
 
     <name>Satisficing</name>
@@ -105,16 +103,6 @@
             <dependency>
                 <groupId>com.spldeolin.satisficing</groupId>
                 <artifactId>satisficing-app</artifactId>
-                <version>${satisficing.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.spldeolin.satisficing</groupId>
-                <artifactId>satisficing-identity-ac</artifactId>
-                <version>${satisficing.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.spldeolin.satisficing</groupId>
-                <artifactId>satisficing-identity-app</artifactId>
                 <version>${satisficing.version}</version>
             </dependency>
         </dependencies>

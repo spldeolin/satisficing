@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
-import com.spldeolin.satisficing.api.EnumAncestor;
+import com.spldeolin.satisficing.api.BaseEnum;
 
 /**
  * @author Deoli 2024-06-08
@@ -26,8 +26,8 @@ public class EnumCollector implements ApplicationRunner {
         Reflections reflections = new Reflections(
                 new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage("")).setScanners(new SubTypesScanner()));
 
-        for (@SuppressWarnings("rawtypes") Class<? extends EnumAncestor> anEnum : reflections.getSubTypesOf(
-                EnumAncestor.class)) {
+        for (@SuppressWarnings("rawtypes") Class<? extends BaseEnum> anEnum : reflections.getSubTypesOf(
+                BaseEnum.class)) {
 
             String enumName = anEnum.getSimpleName();
             if (enumName.endsWith("Enum")) {
@@ -35,7 +35,7 @@ public class EnumCollector implements ApplicationRunner {
             }
             enumName = CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, enumName);
 
-            for (EnumAncestor<?> enumConstant : anEnum.getEnumConstants()) {
+            for (BaseEnum<?> enumConstant : anEnum.getEnumConstants()) {
                 enumCache.put(enumName, enumConstant.getCode().toString(), enumConstant.getTitle());
             }
         }

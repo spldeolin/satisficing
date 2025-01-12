@@ -8,7 +8,7 @@ import java.util.Objects;
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.EnumTypeHandler;
 import org.apache.ibatis.type.JdbcType;
-import com.spldeolin.satisficing.api.EnumAncestor;
+import com.spldeolin.satisficing.api.BaseEnum;
 
 /**
  * 集成了EnumAncestorTypeHandler，用于代替Mybatis内置默认的EnumTypeHandler的TypeHandler
@@ -27,7 +27,7 @@ public class EnumTypeHandlerEx<E extends Enum<E>> extends BaseTypeHandler<E> {
     public EnumTypeHandlerEx(Class<E> enumType) {
         Objects.requireNonNull(enumType, "Type argument cannot be null");
 
-        if (EnumAncestor.class.isAssignableFrom(enumType)) {
+        if (BaseEnum.class.isAssignableFrom(enumType)) {
             typeHandler = new EnumAncestorTypeHandler((Class) enumType);
         } else {
             typeHandler = new EnumTypeHandler(enumType);
