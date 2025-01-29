@@ -13,13 +13,16 @@
         <module>satisficing-api</module>
         <module>satisficing-app</module>
         <module>satisficing-archetype</module>
+        <module>satisficing-allison1875</module>
     </modules>
 
     <name>Satisficing</name>
     <url>https://github.com/spldeolin/satisficing</url>
 
     <properties>
-        <satisficing.version>0.0.1-SNAPSHOT</satisficing.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
 
     <dependencyManagement>
@@ -35,6 +38,13 @@
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
                 <version>2021.0.9</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.spldeolin.allison1875</groupId>
+                <artifactId>allison1875</artifactId>
+                <version>12.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -97,13 +107,18 @@
             <!-- modules version management -->
             <dependency>
                 <groupId>com.spldeolin.satisficing</groupId>
+                <artifactId>satisficing-allison1875</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.spldeolin.satisficing</groupId>
                 <artifactId>satisficing-api</artifactId>
-                <version>${satisficing.version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.spldeolin.satisficing</groupId>
                 <artifactId>satisficing-app</artifactId>
-                <version>${satisficing.version}</version>
+                <version>${project.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

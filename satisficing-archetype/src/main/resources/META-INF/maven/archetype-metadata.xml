@@ -9,6 +9,14 @@
         <requiredProperty key="withAllison1875">
             <defaultValue>${withAllison1875}</defaultValue>
         </requiredProperty>
+        <requiredProperty key="author">
+            <defaultValue>${author}</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="today">
+            <defaultValue>
+                ${package.getClass().forName("java.time.LocalDateTime").getMethod("now").invoke(null).format($package.Class.forName("java.time.format.DateTimeFormatter").getMethod("ofPattern", $package.Class).invoke(null, "yyyy-MM-dd"))}
+            </defaultValue>
+        </requiredProperty>
     </requiredProperties>
 
     <fileSets>

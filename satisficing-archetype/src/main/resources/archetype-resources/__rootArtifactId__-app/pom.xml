@@ -24,6 +24,13 @@
             <groupId>com.spldeolin.satisficing</groupId>
             <artifactId>satisficing-app</artifactId>
         </dependency>
+        #if ($withAllison1875 == "true")
+        <dependency>
+            <groupId>com.spldeolin.allison1875</groupId>
+            <artifactId>allison1875-support</artifactId>
+            <optional>true</optional>
+        </dependency>
+        #end
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -41,32 +48,45 @@
             <plugin>
                 <groupId>com.spldeolin.allison1875</groupId>
                 <artifactId>allison1875-maven-plugin</artifactId>
-                <version>12.0-SNAPSHOT</version>
+                <version>12.0</version>
                 <dependencies>
                     <dependency>
-                        <groupId>com.spldeolin.allison1875</groupId>
-                        <artifactId>allison1875-extension-satisficing</artifactId>
-                        <version>12.0-SNAPSHOT</version>
+                        <groupId>com.spldeolin.satisficing</groupId>
+                        <artifactId>satisficing-allison1875</artifactId>
+                        <version>0.0.1-SNAPSHOT</version>
                     </dependency>
                 </dependencies>
                 <configuration>
                     <common>
-                        <basePackage>${package}</basePackage>
+                        <basePackage>${package}.app</basePackage>
                         <enableLotNoAnnounce>false</enableLotNoAnnounce>
-                        <author>Allison1875</author>
+                        <author>${author}</author>
                     </common>
                     <docAnalyzer>
-                        <module>com.spldeolin.allison1875.extension.satisficing.DocAnalyzerModule</module>
+                        <module>com.spldeolin.satisficing.allison1875.DocAnalyzerModule</module>
                     </docAnalyzer>
                     <handlerTransformer>
-                        <module>com.spldeolin.allison1875.extension.satisficing.HandlerTransformerModule</module>
+                        <module>com.spldeolin.satisficing.allison1875.HandlerTransformerModule</module>
                     </handlerTransformer>
                     <persistenceGenerator>
-                        <jdbcUrl>jdbc:mysql://localhost:3306</jdbcUrl>
-                        <userName>root</userName>
-                        <password>root</password>
-                        <schema>${rootArtifactId}</schema>
-                        <tables></tables>
+                        <module>com.spldeolin.satisficing.allison1875.PersistenceGeneratorModule</module>
+                        <ddl>CREATE TABLE `sample`
+                            (
+                            `id` BIGINT NOT NULL COMMENT '主键',
+                            `created_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                            `updated_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT
+                            '更新时间',
+                            `prop_one1` VARCHAR(255) DEFAULT NULL,
+                            `propTwo2` DATE,
+                            `prop3` TIME,
+                            `prop4` DATETIME,
+                            `prop5` TIMESTAMP,
+                            `prop6` VARCHAR(64) COMMENT '枚举演示 E(foo=FOO标题 bar=BAR标题)',
+                            `prop7` INT,
+                            `prop8` TINYINT(1) COMMENT '只有TINYINT(1)会映射到Boolean',
+                            PRIMARY KEY (`id`)
+                            ) COMMENT '演示用'
+                        </ddl>
                         <enableGenerateDesign>true</enableGenerateDesign>
                     </persistenceGenerator>
                 </configuration>

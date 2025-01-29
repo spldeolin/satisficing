@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * @author Deolin 2024-06-07
+ * @author ${author} ${today}
  */
 @Configuration("${artifactId}AutoConfiguration")
 @ComponentScan("${package}.api")

@@ -7,17 +7,17 @@ import javax.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import ${package}.api.dto.req.DemoReqDto;
-import ${package}.api.dto.resp.DemoRespDto;
+import ${package}.api.dto.req.SampleReqDto;
+import ${package}.api.dto.resp.SampleRespDto;
 import com.spldeolin.satisficing.api.RequestResult;
 
 /**
- * @author Deolin 2023-04-09
+ * @author ${author} ${today}
  */
 @FeignClient(value = "${parentArtifactId}-app")
-public interface DemoClient {
+public interface SampleClient {
 
-    @PostMapping("/demoMethod")
-    RequestResult<DemoRespDto> demoMethod(@RequestBody @Valid DemoReqDto req);
+    @PostMapping("/sampleMethod")
+    RequestResult<SampleRespDto> sampleMethod(@RequestBody @Valid SampleReqDto req);
 
 }

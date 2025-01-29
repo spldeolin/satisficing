@@ -9,7 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 
 /**
- * @author Deolin 2019-01-22
+ * @author ${author} ${today}
  */
 @ComponentScan("${package}.app")
 @MapperScan("${package}.app.mapper")
@@ -18,6 +18,7 @@ public class Application {
 
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
+        System.out.println("curl --request POST --url 'http://localhost:2333/sampleMethod' --header 'Content-Type: application/json' --data '{ \"name\": \"${author}\" }'");
     }
 
 }

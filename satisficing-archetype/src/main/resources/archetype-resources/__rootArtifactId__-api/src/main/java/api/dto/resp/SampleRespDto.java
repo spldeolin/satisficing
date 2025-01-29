@@ -7,12 +7,12 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 
 /**
- * @author Deolin 2023-04-09
+ * @author ${author} ${today}
  */
 @Data
 @Accessors(chain = true)
-public class DemoRespDto {
+public class SampleRespDto {
 
-    private String name;
+    private String greeting;
 
 }
