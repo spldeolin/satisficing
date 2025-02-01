@@ -24,7 +24,7 @@
             <groupId>com.spldeolin.satisficing</groupId>
             <artifactId>satisficing-app</artifactId>
         </dependency>
-        #if ($withAllison1875 == "true")
+        #if( $withAllison1875 == "true" )
         <dependency>
             <groupId>com.spldeolin.allison1875</groupId>
             <artifactId>allison1875-support</artifactId>
@@ -44,7 +44,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
-            #if ($withAllison1875 == "true")
+            #if( $withAllison1875 == "true" )
             <plugin>
                 <groupId>com.spldeolin.allison1875</groupId>
                 <artifactId>allison1875-maven-plugin</artifactId>
@@ -70,6 +70,14 @@
                     </handlerTransformer>
                     <persistenceGenerator>
                         <module>com.spldeolin.satisficing.allison1875.PersistenceGeneratorModule</module>
+                        #if( !$org.apache.commons.lang3.StringUtils.isAnyEmpty($jdbcUrl, $jdbcSchema, $jdbcUsername,
+                        $jdbcPassword) )
+                        <!-- <jdbcUrl>${jdbcUrl}</jdbcUrl> -->
+                        <!-- <userName>${jdbcUsername}</userName> -->
+                        <!-- <password>${jdbcPassword}</password> -->
+                        <!-- <schema>${jdbcSchema}</schema> -->
+                        <!-- <tables></tables> -->
+                        #end
                         <ddl>CREATE TABLE `sample`
                             (
                             `id` BIGINT NOT NULL COMMENT '主键',

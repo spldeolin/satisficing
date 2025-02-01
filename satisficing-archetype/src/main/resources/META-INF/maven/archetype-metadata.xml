@@ -17,6 +17,24 @@
                 ${package.getClass().forName("java.time.LocalDateTime").getMethod("now").invoke(null).format($package.Class.forName("java.time.format.DateTimeFormatter").getMethod("ofPattern", $package.Class).invoke(null, "yyyy-MM-dd"))}
             </defaultValue>
         </requiredProperty>
+        <requiredProperty key="jdbcUrl">
+            <defaultValue>jdbc:mysql://localhost:3306</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="jdbcSchema">
+            <defaultValue>${artifactId.replace("-", "_")}</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="jdbcUsername">
+            <defaultValue>root</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="jdbcPassword">
+            <defaultValue>root</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="redisUrl">
+            <defaultValue>redis://localhost:6379</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="redisPassword">
+            <defaultValue># NO_PASSWORD</defaultValue>
+        </requiredProperty>
     </requiredProperties>
 
     <fileSets>
