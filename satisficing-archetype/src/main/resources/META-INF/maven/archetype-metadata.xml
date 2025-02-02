@@ -7,10 +7,10 @@
 
     <requiredProperties>
         <requiredProperty key="withAllison1875">
-            <defaultValue>${withAllison1875}</defaultValue>
+            <defaultValue>false</defaultValue>
         </requiredProperty>
         <requiredProperty key="author">
-            <defaultValue>${author}</defaultValue>
+            <defaultValue>The Author</defaultValue>
         </requiredProperty>
         <requiredProperty key="today">
             <defaultValue>

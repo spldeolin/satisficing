@@ -14,7 +14,7 @@ Satisficing is a Spring Boot-based web framework, which provides typical modern 
 ## Quick Start
 
 ```shell
-# download and setup Satisficing
+# download and setup
 git clone git@github.com:spldeolin/satisficing.git
 mvn install -f satisficing/pom.xml
 
@@ -28,14 +28,7 @@ mvn archetype:generate \
     -DgroupId=com.your.group \
     -DartifactId=your-project  \
     -Dversion=0.0.1-SNAPSHOT \
-    -DwithAllison1875=true \
-    -Dauthor='Deolin' \
-    -DjdbcUrl='jdbc:mysql://localhost:3306' \
-    -DjdbcSchema='your-project' \
-    -DjdbcUsername='root' \
-    -DjdbcPassword='root' \
-    -DredisUrl='redis://localhost:6379' \
-    -DredisPassword='root'
+    -DwithAllison1875=true 
 
 # launch your project
 mvn install -f your-project/pom.xml
@@ -45,3 +38,16 @@ curl --request POST \
     --header 'Content-Type: application/json' \
     --data '{ "name": "Satisfied Deolin" }'
 ```
+
+### Custom Variables
+
+| name | required | defaultValue |
+| --- | --- | --- |
+| withAllison1875 | false | `true` |
+| author | false | `The Author` |
+| jdbcUrl | false | `jdbc:mysql://localhost:3306` |
+| jdbcSchema | false | artifactId.replace("-", "_") |
+| jdbcUsername | false | `root` |
+| jdbcPassword | false | `root` |
+| redisUrl | false | `redis://localhost:6379` |
+| redisPassword | false | `# NO_PASSWORD` |
