@@ -1,4 +1,4 @@
-package com.your.group.app.controller;
+package ${package}.app.controller;
 
 import javax.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
