@@ -169,8 +169,8 @@ public class TableAnalyzerServiceImpl2 extends TableAnalyzerServiceImpl {
                                     + "return Arrays" + ".stream(values()).filter(anEnum -> anEnum.getCode().equals" + "(code))"
                                     + ".findFirst().orElse(null); }", enumName)).asMethodDeclaration()
                     .setJavadocComment("获取code对应的枚举"));
-            ed.addMember(StaticJavaParser.parseBodyDeclaration(
-                    "@Override public String toString() { return asDTO().toString(); }").asMethodDeclaration());
+            ed.addMember(StaticJavaParser.parseBodyDeclaration("@Override public String toString() { return code; }")
+                    .asMethodDeclaration());
             cu.addType(ed);
             Path enumPath = CodeGenerationUtils.fileInPackageAbsolutePath(AstForestContext.get().getSourceRoot(),
                     enumPackage, enumName + ".java");
