@@ -1,3 +1,4 @@
+#set( $symbol_dollar = '$' )
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -18,19 +19,19 @@
         <dependency>
             <groupId>${groupId}</groupId>
             <artifactId>${rootArtifactId}-api</artifactId>
-            <version>${version}</version>
+            <version>${symbol_dollar}{project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.spldeolin.satisficing</groupId>
             <artifactId>satisficing-app</artifactId>
         </dependency>
-        #if( $withAllison1875 == "true" )
+#if( $withAllison1875 == "true" )
         <dependency>
             <groupId>com.spldeolin.allison1875</groupId>
             <artifactId>allison1875-support</artifactId>
             <optional>true</optional>
         </dependency>
-        #end
+#end
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -44,7 +45,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
-            #if( $withAllison1875 == "true" )
+#if( $withAllison1875 == "true" )
             <plugin>
                 <groupId>com.spldeolin.allison1875</groupId>
                 <artifactId>allison1875-maven-plugin</artifactId>
@@ -117,7 +118,7 @@
                     </compilerArgs>
                 </configuration>
             </plugin>
-            #end
+#end
         </plugins>
         <resources>
             <!-- 必须要有这个，否则会导致bootstrap.yml文件build到target目录时，%profileActive%没有发生替换 -->

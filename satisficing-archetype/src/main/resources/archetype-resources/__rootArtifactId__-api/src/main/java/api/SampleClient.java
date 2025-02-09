@@ -14,7 +14,7 @@ import com.spldeolin.satisficing.api.RequestResult;
 /**
  * @author ${author} ${today}
  */
-@FeignClient(value = "${parentArtifactId}-app")
+@FeignClient(value = "${parentArtifactId}")
 public interface SampleClient {
 
     @PostMapping("/sampleMethod")
