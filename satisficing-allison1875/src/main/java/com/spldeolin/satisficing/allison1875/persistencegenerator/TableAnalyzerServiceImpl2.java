@@ -77,6 +77,7 @@ public class TableAnalyzerServiceImpl2 extends TableAnalyzerServiceImpl {
             description = Pattern.compile("T\\((.+?)\\)").matcher(description).replaceFirst("").trim();
             description = Pattern.compile("E\\((.+?)\\)").matcher(description).replaceFirst("").trim();
             property.setDescription(description);
+            return enumOrForceType;
         }
         return super.jdbcType2javaType(columnType, dataType, property, tableAnalysis);
     }
@@ -86,7 +87,7 @@ public class TableAnalyzerServiceImpl2 extends TableAnalyzerServiceImpl {
 
         Pattern enumPattern = Pattern.compile("E\\((.+?)\\)");
         Matcher enumMatcher = enumPattern.matcher(columnComment);
-        if (enumMatcher.find() && StringUtils.equalsAnyIgnoreCase(columnType, "varchar", "char", "text", "longtext")) {
+        if (enumMatcher.find() && StringUtils.startsWithAny(columnType.toLowerCase(), "varchar", "char", "text", "longtext")) {
             String enumName = MoreStringUtils.toUpperCamel(tableAnalysis.getTableName()) + MoreStringUtils.toUpperCamel(
                     columnName) + "Enum";
 
