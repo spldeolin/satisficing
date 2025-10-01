@@ -1,7 +1,7 @@
 package com.spldeolin.satisficing.allison1875;
 
 import com.spldeolin.allison1875.common.config.CommonConfig;
-import com.spldeolin.allison1875.docanalyzer.DocAnalyzerConfig;
+import com.spldeolin.allison1875.docanalyzer.config.DocAnalyzerConfig;
 import com.spldeolin.allison1875.docanalyzer.service.EnumService;
 import com.spldeolin.allison1875.docanalyzer.service.FieldService;
 import com.spldeolin.allison1875.docanalyzer.service.ResponseBodyService;

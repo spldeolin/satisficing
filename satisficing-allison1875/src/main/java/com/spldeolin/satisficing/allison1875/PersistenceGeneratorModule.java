@@ -1,7 +1,7 @@
 package com.spldeolin.satisficing.allison1875;
 
 import com.spldeolin.allison1875.common.config.CommonConfig;
-import com.spldeolin.allison1875.persistencegenerator.PersistenceGeneratorConfig;
+import com.spldeolin.allison1875.persistencegenerator.config.PersistenceGeneratorConfig;
 import com.spldeolin.allison1875.persistencegenerator.service.TableAnalyzerService;
 import com.spldeolin.satisficing.allison1875.persistencegenerator.TableAnalyzerServiceImpl2;
 
