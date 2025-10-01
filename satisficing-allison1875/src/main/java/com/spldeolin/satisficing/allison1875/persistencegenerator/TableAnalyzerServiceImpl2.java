@@ -55,76 +55,30 @@ public class TableAnalyzerServiceImpl2 extends TableAnalyzerServiceImpl {
         this.enumPackage = enumPackage;
     }
 
-    /**
-     * 分析 T(com.foo.Bar) 和 E(foo=bar quz=baaz)
-     */
     @Override
-    public TableAnalysisDTO analyzeFromSameTable(List<InformationSchemaDTO> infoSchemas) {
-        Map<String, InformationSchemaDTO> infoSchemasMap = Maps.newHashMap();
-        infoSchemas.forEach(o -> infoSchemasMap.put(o.getColumnName(), o));
-
-        TableAnalysisDTO tableAnalysis = super.analyzeFromSameTable(infoSchemas);
-        for (PropertyDTO property : tableAnalysis.getProperties()) {
-            InformationSchemaDTO infoSchema = infoSchemasMap.get(property.getColumnName());
-            String columnType = infoSchema.getDataType();
-            if ("date".equalsIgnoreCase(columnType)) {
-                property.setJavaType(new JavaTypeDTO().setClass(LocalDate.class));
-            }
-            if ("time".equalsIgnoreCase(columnType)) {
-                property.setJavaType(new JavaTypeDTO().setClass(LocalTime.class));
-            }
-            if ("datetime".equalsIgnoreCase(columnType)) {
-                property.setJavaType(new JavaTypeDTO().setClass(LocalDateTime.class));
-            }
-            if ("timestamp".equalsIgnoreCase(columnType)) {
-                property.setJavaType(new JavaTypeDTO().setClass(LocalDateTime.class));
-            }
-            JavaTypeDTO enumOrForceType = enumOrForceType(columnType, property.getDescription(),
-                    property.getColumnName(), tableAnalysis);
-            if (enumOrForceType != null) {
-                property.setJavaType(enumOrForceType);
-                String description = property.getDescription();
-                description = Pattern.compile("T\\((.+?)\\)").matcher(description).replaceFirst("").trim();
-                description = Pattern.compile("E\\((.+?)\\)").matcher(description).replaceFirst("").trim();
-                property.setDescription(description);
-            }
+    protected JavaTypeDTO jdbcType2javaType(String columnType, String dataType, PropertyDTO property, TableAnalysisDTO tableAnalysis) {
+        if ("date".equalsIgnoreCase(columnType)) {
+            return new JavaTypeDTO().setClass(LocalDate.class);
         }
-        return tableAnalysis;
-    }
-
-    @Override
-    public TableAnalysisDTO analyzeFromDdl(SQLCreateTableStatement createTableStmt) {
-        Map<String, SQLColumnDefinition> columnDefsMap = Maps.newHashMap();
-        createTableStmt.getColumnDefinitions()
-                .forEach(o -> columnDefsMap.put(o.getName().getSimpleName().replace("`", ""), o));
-
-        TableAnalysisDTO tableAnalysis = super.analyzeFromDdl(createTableStmt);
-        for (PropertyDTO property : tableAnalysis.getProperties()) {
-            SQLColumnDefinition columnDef = columnDefsMap.get(property.getColumnName());
-            String columnType = columnDef.getDataType().getName();
-            if ("date".equalsIgnoreCase(columnType)) {
-                property.setJavaType(new JavaTypeDTO().setClass(LocalDate.class));
-            }
-            if ("time".equalsIgnoreCase(columnType)) {
-                property.setJavaType(new JavaTypeDTO().setClass(LocalTime.class));
-            }
-            if ("datetime".equalsIgnoreCase(columnType)) {
-                property.setJavaType(new JavaTypeDTO().setClass(LocalDateTime.class));
-            }
-            if ("timestamp".equalsIgnoreCase(columnType)) {
-                property.setJavaType(new JavaTypeDTO().setClass(LocalDateTime.class));
-            }
-            JavaTypeDTO enumOrForceType = enumOrForceType(columnType, property.getDescription(),
-                    property.getColumnName(), tableAnalysis);
-            if (enumOrForceType != null) {
-                property.setJavaType(enumOrForceType);
-                String description = property.getDescription();
-                description = Pattern.compile("T\\((.+?)\\)").matcher(description).replaceFirst("").trim();
-                description = Pattern.compile("E\\((.+?)\\)").matcher(description).replaceFirst("").trim();
-                property.setDescription(description);
-            }
+        if ("time".equalsIgnoreCase(columnType)) {
+            return new JavaTypeDTO().setClass(LocalTime.class);
         }
-        return tableAnalysis;
+        if ("datetime".equalsIgnoreCase(columnType)) {
+            return new JavaTypeDTO().setClass(LocalDateTime.class);
+        }
+        if ("timestamp".equalsIgnoreCase(columnType)) {
+            return new JavaTypeDTO().setClass(LocalDateTime.class);
+        }
+        JavaTypeDTO enumOrForceType = enumOrForceType(columnType, property.getDescription(),
+                property.getColumnName(), tableAnalysis);
+        if (enumOrForceType != null) {
+            property.setJavaType(enumOrForceType);
+            String description = property.getDescription();
+            description = Pattern.compile("T\\((.+?)\\)").matcher(description).replaceFirst("").trim();
+            description = Pattern.compile("E\\((.+?)\\)").matcher(description).replaceFirst("").trim();
+            property.setDescription(description);
+        }
+        return super.jdbcType2javaType(columnType, dataType, property, tableAnalysis);
     }
 
     private JavaTypeDTO enumOrForceType(String columnType, String columnComment, String columnName,
