@@ -1,0 +1,394 @@
+package com.spldeolin.satisficing.app.util;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.spldeolin.satisficing.api.SysException;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import okhttp3.Call;
+import okhttp3.ConnectionPool;
+import okhttp3.HttpUrl;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+
+/**
+ * HTTP工具类
+ * <pre>
+ * 基于 OkHttp4 实现的HTTP请求工具类，提供GET和POST方法。
+ * 支持泛化的返回类型或是JsonNode用于映射Response Body。
+ * 默认总超时时间为10秒，可通过方法参数覆盖单次请求的超时时间。
+ * </pre>
+ *
+ * @author Deolin 2025-11-15
+ */
+@Slf4j
+public class HttpUtils {
+
+    private static final MediaType JSON_MEDIA_TYPE = MediaType.get("application/json;charset=utf-8");
+
+    private static final long DEFAULT_TIMEOUT_SEC = 10;
+
+    private static final OkHttpClient DEFAULT_CLIENT = createClient(DEFAULT_TIMEOUT_SEC);
+
+    private HttpUtils() {
+        throw new UnsupportedOperationException("Never instantiate me.");
+    }
+
+    /**
+     * 重载方法{@link #executePost(java.lang.String, java.lang.Object, com.fasterxml.jackson.core.type.TypeReference,
+     * java.util.Map, okhttp3.OkHttpClient)}
+     */
+    public static JsonNode post(String url, Object reqBodyDTO) {
+        return post(url, reqBodyDTO, null, null, DEFAULT_TIMEOUT_SEC);
+    }
+
+    /**
+     * 重载方法{@link #executePost(java.lang.String, java.lang.Object, com.fasterxml.jackson.core.type.TypeReference,
+     * java.util.Map, okhttp3.OkHttpClient)}
+     */
+    public static <T> T post(String url, Object reqBodyDTO, TypeReference<T> respBodyType) {
+        return post(url, reqBodyDTO, respBodyType, null, DEFAULT_TIMEOUT_SEC);
+    }
+
+    /**
+     * 重载方法{@link #executePost(java.lang.String, java.lang.Object, com.fasterxml.jackson.core.type.TypeReference,
+     * java.util.Map, okhttp3.OkHttpClient)}
+     */
+    public static <T> T post(String url, Object reqBodyDTO, TypeReference<T> respBodyType,
+            Map<String, String> reqHeaders) {
+        return post(url, reqBodyDTO, respBodyType, reqHeaders, DEFAULT_TIMEOUT_SEC);
+    }
+
+    /**
+     * 执行POST请求
+     *
+     * @param url 请求URL，不能为空
+     * @param reqBodyDTO 请求体对象，将被序列化为JSON字符串，可以为null
+     * @param respBodyType 响应体的类型引用，用于反序列化泛型JSON响应；可以为null，这将会返回JsonNode对象
+     * @param reqHeaders 自定义HTTP请求头，key为header名称，value为header值，可以为null
+     * @param timeoutSec 本次请求的总超时时间（秒），必须大于0
+     * @param <T> 响应体的类型
+     * @return 反序列化后的响应对象
+     * @throws TimeoutException 请求超时时抛出
+     * @throws Not200Exception 回应状态码非200时抛出
+     * @throws HttpException 其他原因请求失败时抛出
+     */
+    public static <T> T post(String url, Object reqBodyDTO, TypeReference<T> respBodyType,
+            Map<String, String> reqHeaders, long timeoutSec) throws Not200Exception, TimeoutException, HttpException {
+        return executePost(url, reqBodyDTO, respBodyType, reqHeaders, createClient(timeoutSec));
+    }
+
+    private static <T> T executePost(String url, Object reqBodyDTO, TypeReference<T> respBodyType,
+            Map<String, String> reqHeaders, OkHttpClient client) {
+        String requestBodyJson = reqBodyDTO == null ? "{}" : JsonUtils.toJson(reqBodyDTO);
+        RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, requestBodyJson);
+
+        Request.Builder requestBuilder = new Request.Builder().url(url).post(body);
+
+        if (reqHeaders != null && !reqHeaders.isEmpty()) {
+            reqHeaders.forEach(requestBuilder::addHeader);
+        }
+
+        Request request = requestBuilder.build();
+        Call call = client.newCall(request);
+
+        try {
+            log.debug("go to execute post, url={}, reqBodyDTO={}", url, requestBodyJson);
+            Response response = call.execute();
+            return handleResponse(response, url, respBodyType);
+        } catch (SocketTimeoutException e) {
+            log.error("fail to execute get clause timeout", e);
+            throw new TimeoutException();
+        } catch (IOException e) {
+            log.error("fail to execute get, url={}, reqBodyDTO={}", url, requestBodyJson, e);
+            throw new HttpException("远程请求失败");
+        }
+    }
+
+    /**
+     * 重载方法{@link #ssePost(java.lang.String, java.lang.Object, java.util.function.Consumer, java.util.Map, long)}
+     */
+    public static void ssePost(String url, Object reqBodyDTO, Consumer<String> eventConsumer) {
+        ssePost(url, reqBodyDTO, eventConsumer, null, DEFAULT_TIMEOUT_SEC);
+    }
+
+    /**
+     * 重载方法{@link #ssePost(java.lang.String, java.lang.Object, java.util.function.Consumer, java.util.Map, long)}
+     */
+    public static void ssePost(String url, Object reqBodyDTO, Consumer<String> eventConsumer,
+            Map<String, String> reqHeaders) {
+        ssePost(url, reqBodyDTO, eventConsumer, reqHeaders, DEFAULT_TIMEOUT_SEC);
+    }
+
+    /**
+     * 执行POST请求，响应为SSE（Server-Sent Events）流
+     * <p>
+     * SSE响应是流式的，通过Consumer回调每个事件的数据。
+     * SSE格式：每行以"data:"开头，后面是实际数据，事件之间用空行分隔。
+     * </p>
+     *
+     * @param url 请求URL，不能为空
+     * @param reqBodyDTO 请求体对象，将被序列化为JSON字符串，可以为null
+     * @param eventConsumer 用于消费每个SSE事件数据的Consumer，每个事件的数据（去除"data:"前缀后的内容）会通过此Consumer回调
+     * @param reqHeaders 自定义HTTP请求头，key为header名称，value为header值，可以为null
+     * @param timeoutSec 本次请求的总超时时间（秒），必须大于0
+     * @throws TimeoutException 请求超时时抛出
+     * @throws Not200Exception 回应状态码非200时抛出
+     * @throws HttpException 其他原因请求失败时抛出
+     */
+    public static void ssePost(String url, Object reqBodyDTO, Consumer<String> eventConsumer,
+            Map<String, String> reqHeaders, long timeoutSec) throws Not200Exception, TimeoutException, HttpException {
+        executeSsePost(url, reqBodyDTO, eventConsumer, reqHeaders, createClient(timeoutSec));
+    }
+
+    private static void executeSsePost(String url, Object reqBodyDTO, Consumer<String> eventConsumer,
+            Map<String, String> reqHeaders, OkHttpClient client) {
+        String requestBodyJson = reqBodyDTO == null ? "{}" : JsonUtils.toJson(reqBodyDTO);
+        RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, requestBodyJson);
+
+        Request.Builder requestBuilder = new Request.Builder().url(url).post(body);
+
+        if (reqHeaders != null && !reqHeaders.isEmpty()) {
+            reqHeaders.forEach(requestBuilder::addHeader);
+        }
+
+        Request request = requestBuilder.build();
+        Call call = client.newCall(request);
+
+        try (Response response = call.execute()) {
+            log.debug("go to execute sse post, url={}, reqBodyDTO={}", url, requestBodyJson);
+
+            if (!response.isSuccessful()) {
+                String errorBody = "";
+                try (ResponseBody respBody = response.body()) {
+                    errorBody = respBody != null ? respBody.string() : "";
+                } catch (IOException e) {
+                    log.warn("fail to read error body, url={}", url, e);
+                }
+                log.error("fail to execute sse clause not 200 code, url={}, code={}, respBody={}", url, response.code(),
+                        errorBody);
+                throw new Not200Exception(response.code());
+            }
+
+            ResponseBody respBody = response.body();
+            if (respBody == null) {
+                log.error("fail to execute sse clause null resp body, url={}", url);
+                throw new HttpException("远程请求失败");
+            }
+
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(respBody.byteStream(), StandardCharsets.UTF_8))) {
+                StringBuilder eventData = new StringBuilder();
+                String line;
+
+                while ((line = reader.readLine()) != null) {
+                    if (line.startsWith("data:")) {
+                        // 提取data:后面的内容，支持多行data（用换行符连接）
+                        String data = line.substring(5);
+                        if (eventData.length() > 0) {
+                            eventData.append("\n");
+                        }
+                        eventData.append(data);
+                    } else if (line.trim().isEmpty()) {
+                        // 空行表示一个事件结束
+                        if (eventData.length() > 0) {
+                            String eventDataStr = eventData.toString().trim();
+                            log.debug("receive sse event, url={}, eventData={}", url, eventDataStr);
+                            eventConsumer.accept(eventDataStr);
+                            eventData.setLength(0); // 清空，准备下一个事件
+                        }
+                    } else if (line.startsWith("event:")) {
+                        // 可选：处理event类型，这里暂时忽略
+                        log.debug("receive sse event type, url={}, eventType={}", url, line.substring(6).trim());
+                    } else if (line.startsWith("id:")) {
+                        // 可选：处理event id，这里暂时忽略
+                        log.debug("receive sse event id, url={}, eventId={}", url, line.substring(3).trim());
+                    }
+                }
+
+                // 处理最后一个事件（如果没有以空行结尾）
+                if (eventData.length() > 0) {
+                    String eventDataStr = eventData.toString().trim();
+                    log.debug("receive sse event (last), url={}, eventData={}", url, eventDataStr);
+                    eventConsumer.accept(eventDataStr);
+                }
+
+                log.debug("sse stream completed, url={}", url);
+            }
+        } catch (SocketTimeoutException e) {
+            log.error("fail to execute sse clause timeout, url={}", url, e);
+            throw new TimeoutException();
+        } catch (IOException e) {
+            log.error("fail to execute sse, url={}, reqBodyDTO={}", url, requestBodyJson, e);
+            throw new HttpException("远程请求失败");
+        }
+    }
+
+    /**
+     * 重载方法{@link #get(java.lang.String, java.util.Map, com.fasterxml.jackson.core.type.TypeReference, java.util.Map,
+     * long)}
+     */
+    public static <T> T get(String url) {
+        return get(url, null, null, null, DEFAULT_TIMEOUT_SEC);
+    }
+
+    /**
+     * 重载方法{@link #get(java.lang.String, java.util.Map, com.fasterxml.jackson.core.type.TypeReference, java.util.Map,
+     * long)}
+     */
+    public static <T> T get(String url, TypeReference<T> respBodyType) {
+        return get(url, respBodyType, null, null, DEFAULT_TIMEOUT_SEC);
+    }
+
+    /**
+     * 重载方法{@link #get(java.lang.String, java.util.Map, com.fasterxml.jackson.core.type.TypeReference, java.util.Map,
+     * long)}
+     */
+    public static <T> T get(String url, TypeReference<T> respBodyType, Map<String, String> reqParams) {
+        return get(url, respBodyType, reqParams, null, DEFAULT_TIMEOUT_SEC);
+    }
+
+    /**
+     * 重载方法{@link #get(java.lang.String, java.util.Map, com.fasterxml.jackson.core.type.TypeReference, java.util.Map,
+     * long)}
+     */
+    public static <T> T get(String url, TypeReference<T> respBodyType, Map<String, String> reqParams,
+            Map<String, String> reqHeaders) {
+        return get(url, respBodyType, reqParams, reqHeaders, DEFAULT_TIMEOUT_SEC);
+    }
+
+    /**
+     * 执行GET请求
+     *
+     * @param url 请求URL，不能为空
+     * @param reqParams 请求参数，key为参数名，value为参数值，可以为null
+     * @param respBodyType 响应体的类型引用，用于反序列化泛型JSON响应；可以为null，这将会返回JsonNode对象
+     * @param reqHeaders 自定义HTTP请求头，key为header名称，value为header值，可以为null
+     * @param timeoutSec 本次请求的总超时时间（秒），必须大于0
+     * @param <T> 响应体的类型
+     * @return 反序列化后的响应对象
+     * @throws TimeoutException 请求超时时抛出
+     * @throws Not200Exception 回应状态码非200时抛出
+     * @throws HttpException 其他原因请求失败时抛出
+     */
+    public static <T> T get(String url, TypeReference<T> respBodyType, Map<String, String> reqParams,
+            Map<String, String> reqHeaders, long timeoutSec) throws Not200Exception, TimeoutException, HttpException {
+        return executeGet(url, respBodyType, reqParams, reqHeaders, createClient(timeoutSec));
+    }
+
+    private static <T> T executeGet(String url, TypeReference<T> respBodyType, Map<String, String> reqParams,
+            Map<String, String> reqHeaders, OkHttpClient client) {
+        HttpUrl.Builder urlBuilder = HttpUrl.parse(url).newBuilder();
+        if (reqParams != null && !reqParams.isEmpty()) {
+            reqParams.forEach(urlBuilder::addQueryParameter);
+        }
+        HttpUrl httpUrl = urlBuilder.build();
+
+        Request.Builder requestBuilder = new Request.Builder().url(httpUrl).get();
+
+        if (reqHeaders != null && !reqHeaders.isEmpty()) {
+            reqHeaders.forEach(requestBuilder::addHeader);
+        }
+
+        Request request = requestBuilder.build();
+        Call call = client.newCall(request);
+
+        try {
+            log.debug("go to execute get, url={}", httpUrl);
+            Response response = call.execute();
+            return handleResponse(response, httpUrl.toString(), respBodyType);
+        } catch (SocketTimeoutException e) {
+            log.error("fail to execute get clause timeout", e);
+            throw new TimeoutException();
+        } catch (IOException e) {
+            log.error("fail to execute get, url={}, error={}", httpUrl, e.getMessage(), e);
+            throw new HttpException("远程请求失败");
+        }
+    }
+
+    private static <T> T handleResponse(Response resp, String url, TypeReference<T> typeReference) {
+        try (ResponseBody respBody = resp.body()) {
+            if (!resp.isSuccessful()) {
+                String errorBody = respBody != null ? respBody.string() : "";
+                log.error("fail to handle resp clause not 200 code, url={}, code={}, respBody={}", url, resp.code(),
+                        errorBody);
+                throw new Not200Exception(resp.code());
+            }
+
+            if (respBody == null) {
+                log.error("fail to handle resp clause null resp body, url={}", url);
+                throw new HttpException("远程请求失败");
+            }
+
+            String responseJson = respBody.string();
+            log.debug("success to to handle resp, url={}, code={}, respBody={}", url, resp.code(), responseJson);
+
+            if (typeReference == null) {
+                return (T) JsonUtils.toTree(responseJson);
+            } else {
+                return JsonUtils.toParameterizedObject(responseJson, typeReference);
+            }
+        } catch (IOException e) {
+            log.error("fail to handle resp, url={}", url, e);
+            throw new HttpException("远程请求失败");
+        }
+    }
+
+    private static OkHttpClient createClient(long timeoutSec) {
+        if (timeoutSec == DEFAULT_TIMEOUT_SEC) {
+            return DEFAULT_CLIENT;
+        }
+        return new OkHttpClient.Builder().callTimeout(timeoutSec, TimeUnit.SECONDS)
+                .connectionPool(new ConnectionPool(20, 300, TimeUnit.SECONDS)).build();
+    }
+
+    public static class HttpException extends SysException {
+
+        private static final long serialVersionUID = 7393159341416075064L;
+
+        public HttpException() {
+            this("远程请求失败");
+        }
+
+        public HttpException(String message) {
+            super(message);
+        }
+
+    }
+
+    public static class TimeoutException extends HttpException {
+
+        private static final long serialVersionUID = -6300167740026792740L;
+
+        public TimeoutException() {
+            super("远程请求超时");
+        }
+
+    }
+
+    public static class Not200Exception extends HttpException {
+
+        private static final long serialVersionUID = 7393159341416075064L;
+
+        @Getter
+        private final int httpCode;
+
+        public Not200Exception(int httpCode) {
+            this.httpCode = httpCode;
+        }
+
+    }
+
+}
