@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -94,7 +95,7 @@ public class HttpUtils {
     private static <T> T executePost(String url, Object reqBodyDTO, TypeReference<T> respBodyType,
             Map<String, String> reqHeaders, OkHttpClient client) {
         String requestBodyJson = reqBodyDTO == null ? "{}" : JsonUtils.toJson(reqBodyDTO);
-        RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, requestBodyJson);
+        RequestBody body = RequestBody.create(requestBodyJson, JSON_MEDIA_TYPE);
 
         Request.Builder requestBuilder = new Request.Builder().url(url).post(body);
 
@@ -157,7 +158,7 @@ public class HttpUtils {
     private static void executeSsePost(String url, Object reqBodyDTO, Consumer<String> eventConsumer,
             Map<String, String> reqHeaders, OkHttpClient client) {
         String requestBodyJson = reqBodyDTO == null ? "{}" : JsonUtils.toJson(reqBodyDTO);
-        RequestBody body = RequestBody.create(JSON_MEDIA_TYPE, requestBodyJson);
+        RequestBody body = RequestBody.create(requestBodyJson, JSON_MEDIA_TYPE);
 
         Request.Builder requestBuilder = new Request.Builder().url(url).post(body);
 
@@ -292,7 +293,7 @@ public class HttpUtils {
 
     private static <T> T executeGet(String url, TypeReference<T> respBodyType, Map<String, String> reqParams,
             Map<String, String> reqHeaders, OkHttpClient client) {
-        HttpUrl.Builder urlBuilder = HttpUrl.parse(url).newBuilder();
+        HttpUrl.Builder urlBuilder = Objects.requireNonNull(HttpUrl.parse(url)).newBuilder();
         if (reqParams != null && !reqParams.isEmpty()) {
             reqParams.forEach(urlBuilder::addQueryParameter);
         }
