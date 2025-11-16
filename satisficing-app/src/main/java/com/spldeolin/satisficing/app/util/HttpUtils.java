@@ -22,6 +22,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import okio.Buffer;
 
 /**
  * HTTP工具类
@@ -107,12 +108,12 @@ public class HttpUtils {
         try {
             log.debug("go to execute post, url={}, reqBodyDTO={}", url, requestBodyJson);
             Response response = call.execute();
-            return handleResponse(response, url, respBodyType);
+            return handleResponse(response, request, respBodyType);
         } catch (SocketTimeoutException e) {
-            log.error("fail to execute get clause timeout", e);
+            log.error("fail to execute post clause timeout, curl={}", buildCurlCommand(request, requestBodyJson), e);
             throw new TimeoutException();
         } catch (IOException e) {
-            log.error("fail to execute get, url={}, reqBodyDTO={}", url, requestBodyJson, e);
+            log.error("fail to execute post, curl={}", buildCurlCommand(request, requestBodyJson), e);
             throw new HttpException("远程请求失败");
         }
     }
@@ -175,16 +176,17 @@ public class HttpUtils {
                 try (ResponseBody respBody = response.body()) {
                     errorBody = respBody != null ? respBody.string() : "";
                 } catch (IOException e) {
-                    log.warn("fail to read error body, url={}", url, e);
+                    log.warn("fail to read error body, curl={}", buildCurlCommand(request, requestBodyJson), e);
                 }
-                log.error("fail to execute sse clause not 200 code, url={}, code={}, respBody={}", url, response.code(),
-                        errorBody);
+                log.error("fail to execute sse clause not 200 code, curl={}, code={}, respBody={}",
+                        buildCurlCommand(request, requestBodyJson), response.code(), errorBody);
                 throw new Not200Exception(response.code());
             }
 
             ResponseBody respBody = response.body();
             if (respBody == null) {
-                log.error("fail to execute sse clause null resp body, url={}", url);
+                log.error("fail to execute sse clause null resp body, curl={}",
+                        buildCurlCommand(request, requestBodyJson));
                 throw new HttpException("远程请求失败");
             }
 
@@ -228,10 +230,10 @@ public class HttpUtils {
                 log.debug("sse stream completed, url={}", url);
             }
         } catch (SocketTimeoutException e) {
-            log.error("fail to execute sse clause timeout, url={}", url, e);
+            log.error("fail to execute sse clause timeout, curl={}", buildCurlCommand(request, requestBodyJson), e);
             throw new TimeoutException();
         } catch (IOException e) {
-            log.error("fail to execute sse, url={}, reqBodyDTO={}", url, requestBodyJson, e);
+            log.error("fail to execute sse, curl={}", buildCurlCommand(request, requestBodyJson), e);
             throw new HttpException("远程请求失败");
         }
     }
@@ -308,31 +310,35 @@ public class HttpUtils {
         try {
             log.debug("go to execute get, url={}", httpUrl);
             Response response = call.execute();
-            return handleResponse(response, httpUrl.toString(), respBodyType);
+            return handleResponse(response, request, respBodyType);
         } catch (SocketTimeoutException e) {
-            log.error("fail to execute get clause timeout", e);
+            log.error("fail to execute get clause timeout, curl={}", buildCurlCommand(request, null), e);
             throw new TimeoutException();
         } catch (IOException e) {
-            log.error("fail to execute get, url={}, error={}", httpUrl, e.getMessage(), e);
+            log.error("fail to execute get, curl={}", buildCurlCommand(request, null), e);
             throw new HttpException("远程请求失败");
         }
     }
 
-    private static <T> T handleResponse(Response resp, String url, TypeReference<T> typeReference) {
+    private static <T> T handleResponse(Response resp, Request request, TypeReference<T> typeReference) {
         try (ResponseBody respBody = resp.body()) {
             if (!resp.isSuccessful()) {
                 String errorBody = respBody != null ? respBody.string() : "";
-                log.error("fail to handle resp clause not 200 code, url={}, code={}, respBody={}", url, resp.code(),
-                        errorBody);
+                String requestBodyJson = extractRequestBody(request);
+                log.error("fail to handle resp clause not 200 code, curl={}, code={}, respBody={}",
+                        buildCurlCommand(request, requestBodyJson), resp.code(), errorBody);
                 throw new Not200Exception(resp.code());
             }
 
             if (respBody == null) {
-                log.error("fail to handle resp clause null resp body, url={}", url);
+                String requestBodyJson = extractRequestBody(request);
+                log.error("fail to handle resp clause null resp body, curl={}",
+                        buildCurlCommand(request, requestBodyJson));
                 throw new HttpException("远程请求失败");
             }
 
             String responseJson = respBody.string();
+            String url = request.url().toString();
             log.debug("success to to handle resp, url={}, code={}, respBody={}", url, resp.code(), responseJson);
 
             if (typeReference == null) {
@@ -341,8 +347,67 @@ public class HttpUtils {
                 return JsonUtils.toParameterizedObject(responseJson, typeReference);
             }
         } catch (IOException e) {
-            log.error("fail to handle resp, url={}", url, e);
+            String requestBodyJson = extractRequestBody(request);
+            log.error("fail to handle resp, curl={}", buildCurlCommand(request, requestBodyJson), e);
             throw new HttpException("远程请求失败");
+        }
+    }
+
+    private static String buildCurlCommand(Request request, String requestBodyJson) {
+        StringBuilder curl = new StringBuilder("curl -X ").append(request.method());
+
+        // 添加URL
+        String url = request.url().toString();
+        String escapedUrl = url.replace("'", "'\\''");
+        curl.append(" '").append(escapedUrl).append("'");
+
+        // 添加请求头
+        request.headers().forEach(header -> {
+            String headerName = header.getFirst();
+            String headerValue = header.getSecond();
+            // 转义单引号
+            String escapedName = headerName.replace("'", "'\\''");
+            String escapedValue = headerValue.replace("'", "'\\''");
+            curl.append(" -H '").append(escapedName).append(": ").append(escapedValue).append("'");
+        });
+
+        // 添加请求体（POST/PUT等方法）
+        if (requestBodyJson != null && !requestBodyJson.isEmpty()) {
+            // 转义单引号，将单引号替换为 '\''
+            String escapedBody = requestBodyJson.replace("'", "'\\''");
+            curl.append(" -d '").append(escapedBody).append("'");
+        } else {
+            // 尝试从Request中提取请求体
+            RequestBody body = request.body();
+            if (body != null) {
+                try {
+                    Buffer buffer = new Buffer();
+                    body.writeTo(buffer);
+                    String bodyStr = buffer.readUtf8();
+                    if (!bodyStr.isEmpty()) {
+                        String escapedBody = bodyStr.replace("'", "'\\''");
+                        curl.append(" -d '").append(escapedBody).append("'");
+                    }
+                } catch (IOException e) {
+                    // 忽略提取失败的情况
+                }
+            }
+        }
+
+        return curl.toString();
+    }
+
+    private static String extractRequestBody(Request request) {
+        RequestBody body = request.body();
+        if (body == null) {
+            return null;
+        }
+        try {
+            Buffer buffer = new Buffer();
+            body.writeTo(buffer);
+            return buffer.readUtf8();
+        } catch (IOException e) {
+            return null;
         }
     }
 
