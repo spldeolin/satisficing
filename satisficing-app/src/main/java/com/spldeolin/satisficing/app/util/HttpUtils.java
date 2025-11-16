@@ -1,9 +1,16 @@
+/*
+<dependency>
+    <groupId>com.squareup.okhttp3</groupId>
+    <artifactId>okhttp</artifactId>
+    <version>4.12.0</version>
+</dependency>
+ */
 package com.spldeolin.satisficing.app.util;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.SocketTimeoutException;
+import java.io.InterruptedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Objects;
@@ -42,7 +49,8 @@ public class HttpUtils {
 
     private static final long DEFAULT_TIMEOUT_SEC = 10;
 
-    private static final OkHttpClient DEFAULT_CLIENT = createClient(DEFAULT_TIMEOUT_SEC);
+    private static final OkHttpClient DEFAULT_CLIENT = new OkHttpClient.Builder().callTimeout(DEFAULT_TIMEOUT_SEC,
+            TimeUnit.SECONDS).connectionPool(new ConnectionPool(20, 300, TimeUnit.SECONDS)).build();
 
     private HttpUtils() {
         throw new UnsupportedOperationException("Never instantiate me.");
@@ -94,7 +102,7 @@ public class HttpUtils {
 
     private static <T> T executePost(String url, Object reqBodyDTO, TypeReference<T> respBodyType,
             Map<String, String> reqHeaders, OkHttpClient client) {
-        String requestBodyJson = reqBodyDTO == null ? "{}" : JsonUtils.toJson(reqBodyDTO);
+        String requestBodyJson = reqBodyDTO == null ? "" : JsonUtils.toJson(reqBodyDTO);
         RequestBody body = RequestBody.create(requestBodyJson, JSON_MEDIA_TYPE);
 
         Request.Builder requestBuilder = new Request.Builder().url(url).post(body);
@@ -107,13 +115,13 @@ public class HttpUtils {
         Call call = client.newCall(request);
 
         try {
-            log.debug("go to execute post, url={}, reqBodyDTO={}", url, requestBodyJson);
+            log.debug("go to execute post, curl={}", buildCurlCommand(request, requestBodyJson));
             Response response = call.execute();
             return handleResponse(response, request, respBodyType);
-        } catch (SocketTimeoutException e) {
+        } catch (InterruptedIOException e) {
             log.error("fail to execute post clause timeout, curl={}", buildCurlCommand(request, requestBodyJson), e);
             throw new TimeoutException();
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("fail to execute post, curl={}", buildCurlCommand(request, requestBodyJson), e);
             throw new HttpException("远程请求失败");
         }
@@ -170,13 +178,13 @@ public class HttpUtils {
         Call call = client.newCall(request);
 
         try (Response response = call.execute()) {
-            log.debug("go to execute sse post, url={}, reqBodyDTO={}", url, requestBodyJson);
+            log.debug("go to execute sse post, curl={}", buildCurlCommand(request, requestBodyJson));
 
             if (!response.isSuccessful()) {
                 String errorBody = "";
                 try (ResponseBody respBody = response.body()) {
                     errorBody = respBody != null ? respBody.string() : "";
-                } catch (IOException e) {
+                } catch (Exception e) {
                     log.warn("fail to read error body, curl={}", buildCurlCommand(request, requestBodyJson), e);
                 }
                 log.error("fail to execute sse clause not 200 code, curl={}, code={}, respBody={}",
@@ -228,12 +236,12 @@ public class HttpUtils {
                     eventConsumer.accept(eventDataStr);
                 }
 
-                log.debug("sse stream completed, url={}", url);
+                log.debug("sse stream completed, curl={}", buildCurlCommand(request, requestBodyJson));
             }
-        } catch (SocketTimeoutException e) {
+        } catch (InterruptedIOException e) {
             log.error("fail to execute sse clause timeout, curl={}", buildCurlCommand(request, requestBodyJson), e);
             throw new TimeoutException();
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("fail to execute sse, curl={}", buildCurlCommand(request, requestBodyJson), e);
             throw new HttpException("远程请求失败");
         }
@@ -243,7 +251,7 @@ public class HttpUtils {
      * 重载方法{@link #get(java.lang.String, java.util.Map, com.fasterxml.jackson.core.type.TypeReference, java.util.Map,
      * long)}
      */
-    public static <T> T get(String url) {
+    public static JsonNode get(String url) {
         return get(url, null, null, null, DEFAULT_TIMEOUT_SEC);
     }
 
@@ -309,13 +317,13 @@ public class HttpUtils {
         Call call = client.newCall(request);
 
         try {
-            log.debug("go to execute get, url={}", httpUrl);
+            log.debug("go to execute get, curl={}", buildCurlCommand(request, null));
             Response response = call.execute();
             return handleResponse(response, request, respBodyType);
-        } catch (SocketTimeoutException e) {
+        } catch (InterruptedIOException e) {
             log.error("fail to execute get clause timeout, curl={}", buildCurlCommand(request, null), e);
             throw new TimeoutException();
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("fail to execute get, curl={}", buildCurlCommand(request, null), e);
             throw new HttpException("远程请求失败");
         }
@@ -326,8 +334,8 @@ public class HttpUtils {
             if (!resp.isSuccessful()) {
                 String errorBody = respBody != null ? respBody.string() : "";
                 String requestBodyJson = extractRequestBody(request);
-                log.error("fail to handle resp clause not 200 code, curl={}, code={}, respBody={}",
-                        buildCurlCommand(request, requestBodyJson), resp.code(), errorBody);
+                log.error("fail to handle resp clause not 200 code, code={}, curl={}, respBody={}", resp.code(),
+                        buildCurlCommand(request, requestBodyJson), errorBody);
                 throw new Not200Exception(resp.code());
             }
 
@@ -339,15 +347,15 @@ public class HttpUtils {
             }
 
             String responseJson = respBody.string();
-            String url = request.url().toString();
-            log.debug("success to to handle resp, url={}, code={}, respBody={}", url, resp.code(), responseJson);
+            log.debug("success to to handle resp, curl={}, respBody={}",
+                    buildCurlCommand(request, extractRequestBody(request)), responseJson);
 
             if (typeReference == null) {
                 return (T) JsonUtils.toTree(responseJson);
             } else {
                 return JsonUtils.toParameterizedObject(responseJson, typeReference);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             String requestBodyJson = extractRequestBody(request);
             log.error("fail to handle resp, curl={}", buildCurlCommand(request, requestBodyJson), e);
             throw new HttpException("远程请求失败");
