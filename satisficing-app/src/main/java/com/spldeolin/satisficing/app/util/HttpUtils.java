@@ -23,6 +23,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Call;
 import okhttp3.ConnectionPool;
+import okhttp3.FormBody;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -105,13 +106,7 @@ public class HttpUtils {
         String requestBodyJson = reqBodyDTO == null ? "" : JsonUtils.toJson(reqBodyDTO);
         RequestBody body = RequestBody.create(requestBodyJson, JSON_MEDIA_TYPE);
 
-        Request.Builder requestBuilder = new Request.Builder().url(url).post(body);
-
-        if (reqHeaders != null && !reqHeaders.isEmpty()) {
-            reqHeaders.forEach(requestBuilder::addHeader);
-        }
-
-        Request request = requestBuilder.build();
+        Request request = buildRequest(url, body, reqHeaders);
         Call call = client.newCall(request);
 
         try {
@@ -125,6 +120,92 @@ public class HttpUtils {
             log.error("fail to execute post, curl={}", buildCurlCommand(request, requestBodyJson), e);
             throw new HttpException("远程请求失败");
         }
+    }
+
+    /**
+     * 重载方法{@link #formPost(java.lang.String, java.util.Map, com.fasterxml.jackson.core.type.TypeReference,
+     * java.util.Map, long)}
+     */
+    public static JsonNode formPost(String url, Map<String, String> formData) {
+        return formPost(url, formData, null, null, DEFAULT_TIMEOUT_SEC);
+    }
+
+    /**
+     * 重载方法{@link #formPost(java.lang.String, java.util.Map, com.fasterxml.jackson.core.type.TypeReference,
+     * java.util.Map, long)}
+     */
+    public static <T> T formPost(String url, Map<String, String> formData, TypeReference<T> respBodyType) {
+        return formPost(url, formData, respBodyType, null, DEFAULT_TIMEOUT_SEC);
+    }
+
+    /**
+     * 重载方法{@link #formPost(java.lang.String, java.util.Map, com.fasterxml.jackson.core.type.TypeReference,
+     * java.util.Map, long)}
+     */
+    public static <T> T formPost(String url, Map<String, String> formData, TypeReference<T> respBodyType,
+            Map<String, String> reqHeaders) {
+        return formPost(url, formData, respBodyType, reqHeaders, DEFAULT_TIMEOUT_SEC);
+    }
+
+    /**
+     * 执行POST请求，请求体为form data格式
+     *
+     * @param url 请求URL，不能为空
+     * @param formData form data参数，key为参数名，value为参数值，可以为null或空Map
+     * @param respBodyType 响应体的类型引用，用于反序列化泛型JSON响应；可以为null，这将会返回JsonNode对象
+     * @param reqHeaders 自定义HTTP请求头，key为header名称，value为header值，可以为null
+     * @param timeoutSec 本次请求的总超时时间（秒），必须大于0
+     * @param <T> 响应体的类型
+     * @return 反序列化后的响应对象
+     * @throws TimeoutException 请求超时时抛出
+     * @throws Not200Exception 回应状态码非200时抛出
+     * @throws HttpException 其他原因请求失败时抛出
+     */
+    public static <T> T formPost(String url, Map<String, String> formData, TypeReference<T> respBodyType,
+            Map<String, String> reqHeaders, long timeoutSec) throws Not200Exception, TimeoutException, HttpException {
+        return executeFormPost(url, formData, respBodyType, reqHeaders, createClient(timeoutSec));
+    }
+
+    private static <T> T executeFormPost(String url, Map<String, String> formData, TypeReference<T> respBodyType,
+            Map<String, String> reqHeaders, OkHttpClient client) {
+        FormBody.Builder formBuilder = new FormBody.Builder();
+        if (formData != null && !formData.isEmpty()) {
+            formData.forEach(formBuilder::add);
+        }
+        RequestBody body = formBuilder.build();
+
+        Request request = buildRequest(url, body, reqHeaders);
+        Call call = client.newCall(request);
+
+        try {
+            log.debug("go to execute form post, curl={}", buildCurlCommand(request, null));
+            Response response = call.execute();
+            return handleResponse(response, request, respBodyType);
+        } catch (InterruptedIOException e) {
+            log.error("fail to execute form post clause timeout, curl={}", buildCurlCommand(request, null), e);
+            throw new TimeoutException();
+        } catch (Exception e) {
+            log.error("fail to execute form post, curl={}", buildCurlCommand(request, null), e);
+            throw new HttpException("远程请求失败");
+        }
+    }
+
+    /**
+     * 构建HTTP请求对象
+     *
+     * @param url 请求URL
+     * @param body 请求体
+     * @param reqHeaders 请求头
+     * @return Request对象
+     */
+    private static Request buildRequest(String url, RequestBody body, Map<String, String> reqHeaders) {
+        Request.Builder requestBuilder = new Request.Builder().url(url).post(body);
+
+        if (reqHeaders != null && !reqHeaders.isEmpty()) {
+            reqHeaders.forEach(requestBuilder::addHeader);
+        }
+
+        return requestBuilder.build();
     }
 
     /**
@@ -165,16 +246,10 @@ public class HttpUtils {
 
     private static void executeSsePost(String url, Object reqBodyDTO, Consumer<String> eventConsumer,
             Map<String, String> reqHeaders, OkHttpClient client) {
-        String requestBodyJson = reqBodyDTO == null ? "{}" : JsonUtils.toJson(reqBodyDTO);
+        String requestBodyJson = reqBodyDTO == null ? "" : JsonUtils.toJson(reqBodyDTO);
         RequestBody body = RequestBody.create(requestBodyJson, JSON_MEDIA_TYPE);
 
-        Request.Builder requestBuilder = new Request.Builder().url(url).post(body);
-
-        if (reqHeaders != null && !reqHeaders.isEmpty()) {
-            reqHeaders.forEach(requestBuilder::addHeader);
-        }
-
-        Request request = requestBuilder.build();
+        Request request = buildRequest(url, body, reqHeaders);
         Call call = client.newCall(request);
 
         try (Response response = call.execute()) {
@@ -381,24 +456,38 @@ public class HttpUtils {
         });
 
         // 添加请求体（POST/PUT等方法）
-        if (requestBodyJson != null && !requestBodyJson.isEmpty()) {
-            // 转义单引号，将单引号替换为 '\''
-            String escapedBody = requestBodyJson.replace("'", "'\\''");
-            curl.append(" -d '").append(escapedBody).append("'");
-        } else {
-            // 尝试从Request中提取请求体
-            RequestBody body = request.body();
-            if (body != null) {
-                try {
-                    Buffer buffer = new Buffer();
-                    body.writeTo(buffer);
-                    String bodyStr = buffer.readUtf8();
-                    if (!bodyStr.isEmpty()) {
-                        String escapedBody = bodyStr.replace("'", "'\\''");
-                        curl.append(" -d '").append(escapedBody).append("'");
+        RequestBody body = request.body();
+        if (body != null) {
+            // 检查是否是 FormBody（form data）
+            if (body instanceof FormBody) {
+                FormBody formBody = (FormBody) body;
+                for (int i = 0; i < formBody.size(); i++) {
+                    String name = formBody.name(i);
+                    String value = formBody.value(i);
+                    // 转义单引号
+                    String escapedName = name.replace("'", "'\\''");
+                    String escapedValue = value.replace("'", "'\\''");
+                    curl.append(" -F '").append(escapedName).append("=").append(escapedValue).append("'");
+                }
+            } else {
+                // JSON 或其他格式的请求体
+                if (requestBodyJson != null && !requestBodyJson.isEmpty()) {
+                    // 转义单引号，将单引号替换为 '\''
+                    String escapedBody = requestBodyJson.replace("'", "'\\''");
+                    curl.append(" -d '").append(escapedBody).append("'");
+                } else {
+                    // 尝试从Request中提取请求体
+                    try {
+                        Buffer buffer = new Buffer();
+                        body.writeTo(buffer);
+                        String bodyStr = buffer.readUtf8();
+                        if (!bodyStr.isEmpty()) {
+                            String escapedBody = bodyStr.replace("'", "'\\''");
+                            curl.append(" -d '").append(escapedBody).append("'");
+                        }
+                    } catch (IOException e) {
+                        // 忽略提取失败的情况
                     }
-                } catch (IOException e) {
-                    // 忽略提取失败的情况
                 }
             }
         }
