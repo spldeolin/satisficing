@@ -51,7 +51,7 @@ public class IdKeyUtils {
     public static String secretKey(int bit) {
         byte[] apiKeyBytes = new byte[bit];
         sr.nextBytes(apiKeyBytes);
-        String retval = Base64.getUrlEncoder().withoutPadding().encodeToString(apiKeyBytes);
+        String retval = Base64.getEncoder().withoutPadding().encodeToString(apiKeyBytes);
         return retval;
     }
 
